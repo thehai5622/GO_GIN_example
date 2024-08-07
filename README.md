@@ -16,6 +16,7 @@ DB_ROOT_PASSWORD=password4321
 ```
 
 # Makefile
+Recommend: Use Bash terminal to avoid command structure errors
 build the application
 ```bash
 make build
@@ -24,6 +25,15 @@ make build
 run the application
 ```bash
 make run
+```
+Create DB container
+```bash
+make docker-run
+```
+
+Shutdown DB container
+```bash
+make docker-down
 ```
 
 clean up binary from the last build
