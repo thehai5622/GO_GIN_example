@@ -1,5 +1,5 @@
 # RESTful API with Gin framework Example
-In project, me use MySQL on Docker and running on Local. Have enjoy it :)))
+In project, I use MySQL on Docker and running on Local. Have enjoy it :)))
 
 # Env example
 Create file ".env" in Root folder project if it doesn't exist and content is below
