@@ -1,5 +1,5 @@
 # RESTful API with Gin framework Example
-    In project, me use MySQL on Docker and running on Local. Have enjoy it :)))
+In project, me use MySQL on Docker and running on Local. Have enjoy it :)))
 
 # Env example
 ```bash
