@@ -5,12 +5,12 @@ all: build
 
 build:
 	@echo "Building..."
-	@go build -o main main.go
+	@go build -o main hello.go
 
 # Run the application
 run:
 	@echo "Run..."
-	@go run main.go
+	@go run hello.go
 
 # Clean the binary
 clean:
