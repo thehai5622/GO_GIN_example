@@ -64,7 +64,7 @@ func CreateHandler(c *gin.Context) {
 	db := mySqlConnect()
 	defer db.Close()
 
-	stmtIns, err := db.Prepare("INSERT INTO `account`(`name`, `description`) VALUES(?, ?)")
+	stmtIns, err := db.Prepare("INSERT INTO `task`(`name`, `description`) VALUES(?, ?)")
 	if err != nil {
 		panic(err.Error())
 	}
