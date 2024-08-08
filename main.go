@@ -1,11 +1,16 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 type Task struct {
@@ -15,6 +20,25 @@ type Task struct {
 
 var tasks []Task = []Task{
 	{Name: "Task Name", Description: "Task Description"},
+}
+
+var (
+	dbname   = os.Getenv("DB_DATABASE")
+	password = os.Getenv("DB_PASSWORD")
+	username = os.Getenv("DB_USERNAME")
+	port     = os.Getenv("DB_PORT")
+	host     = os.Getenv("DB_HOST")
+)
+
+func mySqlConnect() *sql.DB {
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", username, password, host, port, dbname))
+	if err != nil {
+		panic(err)
+	}
+	db.SetConnMaxLifetime(time.Minute * 3)
+	db.SetMaxOpenConns(10)
+	db.SetConnMaxIdleTime(10)
+	return db
 }
 
 func main() {
@@ -30,11 +54,22 @@ func main() {
 
 func helloHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Hello world",
+		"code":    http.StatusOK,
+		"message": "Success",
+		"app_env": os.Getenv("APP_ENV"),
 	})
 }
 
 func CreateHandler(c *gin.Context) {
+	db := mySqlConnect()
+	defer db.Close()
+
+	stmtIns, err := db.Prepare("INSERT INTO `account`(`name`, `description`) VALUES(?, ?)")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer stmtIns.Close()
+
 	var newTask Task
 	var error = c.BindJSON(&newTask)
 	if error != nil {
@@ -45,6 +80,10 @@ func CreateHandler(c *gin.Context) {
 	}
 
 	tasks = append(tasks, newTask)
+	_, err = stmtIns.Exec(newTask.Name, newTask.Description)
+	if err != nil {
+		panic(err.Error())
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "OK",
 		"data":    newTask,
