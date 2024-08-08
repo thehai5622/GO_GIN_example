@@ -1,4 +1,4 @@
-# RESTful API with Gin framework Example
+# RESTful API with Go and Gin framework Example
 In project, I use MySQL on Docker and running on Local. Have enjoy it :)))
 
 # Env example
@@ -14,6 +14,14 @@ DB_USERNAME=melkey
 DB_PASSWORD=password1234
 DB_ROOT_PASSWORD=password4321
 ```
+
+# Database: MySQL
+If you use Window and don't have "make" command. Opening the Command Prompt as Administrator and run
+```bash
+choco install make -y
+```
+On task command in Makefile, run command "Create DB container".
+Connect to DB by "Navicat" or something else, and SQL file in "database" folder
 
 # Makefile
 Recommend: Use Bash terminal to avoid command structure errors
@@ -39,9 +47,4 @@ make docker-down
 clean up binary from the last build
 ```bash
 make clean
-```
-
-PS: If you use Window and don't have "make" command. Opening the Command Prompt as Administrator and run
-```bash
-choco install make -y
 ```
