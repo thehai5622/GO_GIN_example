@@ -14,8 +14,11 @@ import (
 )
 
 type Task struct {
+	Id          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	CreateAt    string `json:"create_at"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 var tasks []Task = []Task{
@@ -79,21 +82,75 @@ func CreateHandler(c *gin.Context) {
 		return
 	}
 
-	tasks = append(tasks, newTask)
 	_, err = stmtIns.Exec(newTask.Name, newTask.Description)
 	if err != nil {
 		panic(err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{
+		"code":    http.StatusOK,
 		"message": "OK",
 		"data":    newTask,
 	})
 }
 
 func ReadsHandler(c *gin.Context) {
+	db := mySqlConnect()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT id, name, description, create_at, updated_at FROM `task`")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Internal Server Error",
+		})
+		return
+	}
+	defer rows.Close()
+
+	columnsName, _ := rows.Columns()
+	values := make([]sql.RawBytes, len(columnsName))
+
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+
+	var data []Task
+
+	for rows.Next() {
+		err = rows.Scan(scanArgs...)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		// Initialize a new Task object
+		var task Task
+		for i, col := range values {
+			switch columnsName[i] {
+			case "id":
+				task.Id = string(col)
+			case "name":
+				task.Name = string(col)
+			case "description":
+				task.Description = string(col)
+			case "create_at":
+				task.CreateAt = string(col)
+			case "updated_at":
+				task.UpdatedAt = string(col)
+			}
+		}
+
+		data = append(data, task)
+	}
+
+	if err = rows.Err(); err != nil {
+		panic(err.Error())
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"data":   tasks,
-		"length": len(tasks),
+		"code":   http.StatusOK,
+		"data":   data,
+		"length": len(data),
 	})
 }
 
