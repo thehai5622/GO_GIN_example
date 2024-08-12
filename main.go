@@ -97,7 +97,7 @@ func ReadsHandler(c *gin.Context) {
 	db := mySqlConnect()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, name, description, create_at, updated_at FROM `task`")
+	rows, err := db.Query("SELECT `id`, `name`, `description`, `create_at`, `updated_at` FROM `task` ORDER BY `create_at` DESC")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    http.StatusBadRequest,
@@ -155,57 +155,73 @@ func ReadsHandler(c *gin.Context) {
 }
 
 func ReadHandler(c *gin.Context) {
-	var id, error = strconv.Atoi(c.Param("id"))
+	var id = c.Param("id")
 
-	if error != nil {
-		fmt.Println(error)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Not a valid ID",
+	db := mySqlConnect()
+	defer db.Close()
+
+	row := db.QueryRow("SELECT `id`, `name`, `description`, `create_at`, `updated_at` FROM `task` WHERE `id` = ?", id)
+
+	var task Task
+	err := row.Scan(&task.Id, &task.Name, &task.Description, &task.CreateAt, &task.UpdatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{
+				"code":    http.StatusNotFound,
+				"message": "Task not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusNotFound,
+			"message": "Internal Server Error",
 		})
 		return
 	}
 
-	for i, v := range tasks {
-		if i == id {
-			c.JSON(http.StatusOK, gin.H{
-				"data": v,
-			})
-			return
-		}
-	}
-
-	c.JSON(http.StatusNotFound, gin.H{
-		"message": "Task ID not Found",
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"data": task,
 	})
 }
 
 func UpdateHandler(c *gin.Context) {
-	var id, error1 = strconv.Atoi(c.Param("id"))
+	var id = c.Param("id")
 
-	if error1 != nil {
-		fmt.Println(error1)
+	db := mySqlConnect()
+	defer db.Close()
+
+	var updatedTask Task
+
+	if err := c.BindJSON(&updatedTask); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Not a valid ID",
+			"message": "Malformed JSON when updating the Task",
 		})
 		return
 	}
 
-	var oldTask = tasks[id]
-	var newTask Task
-	var error2 = c.BindJSON(&newTask)
-	if error2 != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Malformed JSON",
+	stmt, err := db.Prepare("UPDATE `task` SET name=?, description=? WHERE id=?")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Internal Server Error",
 		})
 		return
 	}
-	oldTask.Name = newTask.Name
-	oldTask.Description = newTask.Description
-	tasks[id] = newTask
+	defer stmt.Close()
+
+	_, err = stmt.Exec(updatedTask.Name, updatedTask.Description, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to update task",
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"code":    http.StatusOK,
+		"id":      id,
 		"message": "Task Updated",
-		"data":    oldTask,
 	})
 }
 
