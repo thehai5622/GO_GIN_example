@@ -10,7 +10,7 @@ build:
 # Run the application
 run:
 	@echo "Run..."
-	@go run main.go
+	@go run main.go jwt.go
 
 # Create DB container
 docker-run:

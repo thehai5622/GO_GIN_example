@@ -20,6 +20,11 @@ type Task struct {
 	UpdatedAt   string `json:"updated_at"`
 }
 
+type LonginInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 var (
 	dbname   = os.Getenv("DB_DATABASE")
 	password = os.Getenv("DB_PASSWORD")
@@ -42,12 +47,43 @@ func mySqlConnect() *sql.DB {
 func main() {
 	app := gin.Default()
 	app.GET("/", helloHandler)
+	app.POST("/login", loginHandler)
 	app.POST("/tasks", CreateHandler)
 	app.GET("/tasks", ReadsHandler)
 	app.GET("/tasks/:id", ReadHandler)
 	app.PUT("/tasks/:id", UpdateHandler)
 	app.DELETE("/tasks/:id", DeleteHandler)
 	app.Run()
+}
+
+func loginHandler(c *gin.Context) {
+	var loginInput LonginInput
+	var err = c.BindJSON(&loginInput)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Malformed JSON when login in",
+		})
+		return
+	}
+
+	token, err := encodeJWT(loginInput.Username)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": err,
+		})
+		return
+	}
+
+	data := make(map[string]any)
+	data["token"] = token
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"data": data,
+	})
 }
 
 func helloHandler(c *gin.Context) {
@@ -84,7 +120,6 @@ func CreateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    http.StatusOK,
 		"message": "OK",
-		"data":    newTask,
 	})
 }
 
