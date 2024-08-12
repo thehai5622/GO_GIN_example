@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,10 +18,6 @@ type Task struct {
 	Description string `json:"description"`
 	CreateAt    string `json:"create_at"`
 	UpdatedAt   string `json:"updated_at"`
-}
-
-var tasks []Task = []Task{
-	{Name: "Task Name", Description: "Task Description"},
 }
 
 var (
@@ -213,6 +208,7 @@ func UpdateHandler(c *gin.Context) {
 	_, err = stmt.Exec(updatedTask.Name, updatedTask.Description, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
 			"message": "Failed to update task",
 		})
 		return
@@ -220,27 +216,45 @@ func UpdateHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"code":    http.StatusOK,
-		"id":      id,
-		"message": "Task Updated",
+		"message": "Task Updated!",
 	})
 }
 
 func DeleteHandler(c *gin.Context) {
-	var id, error1 = strconv.Atoi(c.Param("id"))
+	var id = c.Param("id")
 
-	if error1 != nil {
-		fmt.Println(error1)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Not a valid ID",
+	db := mySqlConnect()
+	defer db.Close()
+
+	stmt, err := db.Prepare("DELETE FROM `task` WHERE id=?")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Internal Server Error",
+		})
+		return
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to delete task",
 		})
 		return
 	}
 
-	firstHalf := tasks[:id]
-	secondHalf := tasks[id+1:]
-	tasks = append(firstHalf, secondHalf...)
+	rowsAffected, err := result.RowsAffected()
+	if err != nil || rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "Task not found",
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Task Delete",
+		"code":    http.StatusOK,
+		"message": "Task Delete!",
 	})
 }
