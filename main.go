@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang-jwt/jwt/v4"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -124,6 +125,27 @@ func CreateHandler(c *gin.Context) {
 }
 
 func ReadsHandler(c *gin.Context) {
+	authorizationHeader := c.Request.Header["Authorization"]
+
+	if len(authorizationHeader) == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "Authorization header is missing",
+		})
+		return
+	}
+
+	claims, err := decodeJWT(authorizationHeader[0])
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": err.Error(),
+		})
+		return
+	}
+	fmt.Println(claims.(jwt.MapClaims)[username])
+
 	db := mySqlConnect()
 	defer db.Close()
 
