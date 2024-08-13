@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"go_gin_example/auth"
+
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-jwt/jwt/v4"
@@ -68,7 +70,7 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
-	token, err := encodeJWT(loginInput.Username)
+	token, err := auth.EncodeJWT(loginInput.Username)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -135,7 +137,7 @@ func ReadsHandler(c *gin.Context) {
 		return
 	}
 
-	claims, err := decodeJWT(authorizationHeader[0])
+	claims, err := auth.DecodeJWT(authorizationHeader[0])
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(http.StatusUnauthorized, gin.H{

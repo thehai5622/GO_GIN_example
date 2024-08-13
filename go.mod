@@ -1,4 +1,4 @@
-module example/hello
+module go_gin_example
 
 go 1.22.5
 
