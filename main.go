@@ -146,7 +146,7 @@ func ReadsHandler(c *gin.Context) {
 		})
 		return
 	}
-	fmt.Println(claims.(jwt.MapClaims)[username])
+	fmt.Println(claims.(jwt.MapClaims)["username"])
 
 	db := mySqlConnect()
 	defer db.Close()
