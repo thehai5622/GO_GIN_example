@@ -103,7 +103,11 @@ func CreateHandler(c *gin.Context) {
 
 	stmtIns, err := db.Prepare("INSERT INTO `task`(`name`, `description`) VALUES(?, ?)")
 	if err != nil {
-		panic(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Internal Server Error",
+		})
+		return
 	}
 	defer stmtIns.Close()
 
@@ -111,6 +115,7 @@ func CreateHandler(c *gin.Context) {
 	var error = c.BindJSON(&newTask)
 	if error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
 			"message": "Malformed JSON when creating a Task",
 		})
 		return
